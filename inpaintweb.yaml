@@ -1,0 +1,8 @@
+name: inpaintweb
+listen_addr: "127.0.0.1:8099"
+default_server: "inpaintweb.lxfater.com"
+default_scheme: "https"
+cache_root: "AppData"
+offline_domains:
+  - "https://cdn.jsdelivr.net"
+  - "https://huggingface.co"
