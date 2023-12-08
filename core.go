@@ -27,7 +27,7 @@ func (c *CacheSystem) Listen() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", c.cacheProxyHandler)
 	log.Println("Listening on:", c.ListenAddr)
-	log.Fatal(http.ListenAndServe(c.ListenAddr, mux))
+	log.Println(http.ListenAndServe(c.ListenAddr, mux))
 }
 
 func (c *CacheSystem) cacheProxyHandler(w http.ResponseWriter, r *http.Request) {

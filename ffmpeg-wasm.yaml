@@ -3,5 +3,6 @@ listen_addr: "127.0.0.1:8100"
 default_server: "ffmpeg-online.vercel.app"
 default_scheme: "https"
 cache_root: "AppData"
+description: "WASM 版ffmpeg WASM version ffmpeg"
 offline_domains:
   - "https://cdn.jsdelivr.net"
