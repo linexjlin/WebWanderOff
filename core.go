@@ -33,15 +33,20 @@ func (c *CacheSystem) Listen() {
 func (c *CacheSystem) cacheProxyHandler(w http.ResponseWriter, r *http.Request) {
 	// Remove '/' from the request URI to get the actual URL
 	targetURL := r.RequestURI[1:]
+	urlPath := r.URL.Path
+
+	log.Println("path", r.URL.Path)
+	log.Println("targetURL", targetURL)
+
 	cachePath := ""
 	if strings.HasPrefix(targetURL, "https/") {
-		cachePath = c.CacheRoot + "/" + strings.Replace(targetURL, "https/", "", 1)
+		cachePath = c.CacheRoot + "/" + strings.Replace(urlPath, "https/", "", 1)
 		targetURL = strings.Replace(targetURL, "https/", "https://", 1)
 	} else if strings.HasPrefix(targetURL, "http/") {
-		cachePath = c.CacheRoot + "/" + strings.Replace(targetURL, "https/", "", 1)
+		cachePath = c.CacheRoot + "/" + strings.Replace(urlPath, "https/", "", 1)
 		targetURL = strings.Replace(targetURL, "http/", "http://", 1)
 	} else {
-		cachePath = c.CacheRoot + "/" + c.DefaultServer + "/" + targetURL
+		cachePath = c.CacheRoot + "/" + c.DefaultServer + "/" + urlPath
 		targetURL = c.DefaultScheme + "://" + c.DefaultServer + "/" + targetURL
 	}
 
@@ -131,6 +136,15 @@ func (c *CacheSystem) serveFile(w http.ResponseWriter, r *http.Request, name str
 			contentType = mimeType
 		} else if mimeType, err := mimetype.DetectFile(name); err == nil {
 			contentType = mimeType.String()
+		}
+
+		log.Println("Detected Content-Type:", contentType)
+		//https://github.com/ffmpegwasm/ffmpeg.wasm/issues/263
+		//SharedArrayBuffer is only available to pages that are cross-origin isolated. So you need to host your own server with Cross-Origin-Embedder-Policy: require-corp and Cross-Origin-Opener-Policy: same-origin headers to use ffmpeg.wasm.
+		if strings.Contains(contentType, "text/html") {
+			//set cross-origin
+			w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
+			w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 		}
 
 		w.Header().Set("Content-Type", contentType)
