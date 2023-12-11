@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 )
@@ -46,7 +48,7 @@ func (c *CacheSystem) cacheProxyHandler(w http.ResponseWriter, r *http.Request) 
 		cachePath = c.CacheRoot + "/" + strings.Replace(urlPath, "https/", "", 1)
 		targetURL = strings.Replace(targetURL, "http/", "http://", 1)
 	} else {
-		cachePath = c.CacheRoot + "/" + c.DefaultServer + "/" + urlPath
+		cachePath = c.CacheRoot + "/" + c.DefaultServer + urlPath
 		targetURL = c.DefaultScheme + "://" + c.DefaultServer + "/" + targetURL
 	}
 
@@ -67,8 +69,17 @@ func (c *CacheSystem) cacheProxyHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	log.Println("Download static data from:", targetURL)
+
+	// Skip verification of insecure SSL cert
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
 	// The resource is not cached, make a request to the target URL
 	client := &http.Client{}
+	client.Transport = tr
+	client.Timeout = 10 * time.Second
+
 	req, err := http.NewRequest(r.Method, targetURL, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -93,6 +104,12 @@ func (c *CacheSystem) cacheProxyHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	defer resp.Body.Close()
+
+	// golang check if http  resp.StatusCode OK
+	if resp.StatusCode != http.StatusOK {
+		log.Println(resp.StatusCode, targetURL)
+		return
+	}
 
 	isGzip := resp.Header.Get("Content-Encoding") == "gzip"
 

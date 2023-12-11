@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,7 +18,7 @@ func UncompressGzip(data []byte) ([]byte, error) {
 	}
 	defer reader.Close()
 
-	uncompressed, err := ioutil.ReadAll(reader)
+	uncompressed, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}
